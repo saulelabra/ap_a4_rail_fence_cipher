@@ -13,8 +13,10 @@ void preparePipes(int in_pipe[], int out_pipe[]);
 
 void closePipes(int in_pipe[], int out_pipe[]);
 
+char * encode(int numRails, char * buffer, char * fileName, char *newFileName);
+
+char * decode(int numRails, char * buffer, char * fileName, char * newFileName);
+
 void encDec(int in_pipe[], int out_pipe[], char option, char * fileName, int numRails);
 
 void ui();
-
-//void createProcess();

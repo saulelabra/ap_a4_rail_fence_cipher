@@ -15,19 +15,134 @@ void closePipes(int in_pipe[], int out_pipe[])
     close (out_pipe[1]);
 }
 
+char * encode(int numRails, char * buffer, char * fileName, char * newFileName)
+{
+    int charCount;
+    int railCount[numRails];
+    char rails[numRails][BUFFER_SIZE];
+    char outBuffer[BUFFER_SIZE];
+    
+    //Initializing counters to 0
+    charCount = 0;
+    for(int i=0; i<numRails; i++)
+    {
+        railCount[i] = 0;
+    }
+
+    //Filling strings
+    while(buffer[charCount] != EOF)
+    {
+        for(int i=0; i<numRails; i++)
+        {
+            rails[i][railCount[i]] = buffer[charCount];
+            railCount[i]++;
+            charCount++;
+        }
+
+        for(int i=numRails-2; i>0; i--)
+        {
+            rails[i][railCount[i]] = buffer[charCount];
+            railCount[i]++;
+            charCount++;
+        }
+    }
+
+    //Printing rails
+    for(int i=0; i<numRails; i++)
+    {
+        printf("%s\n", rails[i]);
+    }
+
+    //printing encrypted string
+    for(int i=0; i<numRails; i++)
+    {
+        strcat(outBuffer, rails[i]);
+    }
+
+    printf("Encoded text: %s\n", outBuffer);
+
+    //Create file and write into it
+    FILE * newFile;
+    strcpy(newFileName, "encoded_");
+    strcat(newFileName, fileName);
+
+    newFile = fopen(newFileName, "w");
+    fputs(outBuffer, newFile);
+    fclose(newFile);
+
+    return newFileName;
+}
+
+char * decode(int numRails, char * buffer, char * fileName, char * newFileName)
+{
+    int charCount = 0;
+    char rails[numRails][BUFFER_SIZE];
+    char outBuffer[BUFFER_SIZE];
+    
+    //Initializing counters to 0
+    int railCount[numRails];
+    for(int i=0; i<numRails; i++)
+    {
+        railCount[i] = 0;
+    }
+
+    //Filling strings
+    while(buffer[charCount] != EOF)
+    {
+        for(int i=0; i<numRails; i++)
+        {
+            rails[i][railCount[i]] = buffer[charCount];
+            railCount[i]++;
+            charCount++;
+        }
+
+        for(int i=numRails-2; i>0; i--)
+        {
+            rails[i][railCount[i]] = buffer[charCount];
+            railCount[i]++;
+            charCount++;
+        }
+    }
+
+    //Printing rails
+    for(int i=0; i<numRails; i++)
+    {
+        printf("%s\n", rails[i]);
+    }
+
+    //printing encrypted string
+    for(int i=0; i<numRails; i++)
+    {
+        strcat(outBuffer, rails[i]);
+    }
+
+    printf("Encoded text: %s\n", outBuffer);
+
+    //Create file and write into it
+    FILE * newFile;
+    strcpy(newFileName, "encoded_");
+    strcat(newFileName, fileName);
+
+    newFile = fopen(newFileName, "w");
+    fputs(outBuffer, newFile);
+    fclose(newFile);
+
+    return newFileName;
+}
+
 void encDec(int in_pipe[], int out_pipe[], char option, char * fileName, int numRails)
 {
     char buffer[BUFFER_SIZE];
-    char outBuffer[BUFFER_SIZE];
+    char newFileName[20];
 
     //Closing unnecesary communication
     preparePipes(in_pipe, out_pipe);
 
     printf("Option received: %c\n", option);
-    printf("path received: %s\n", fileName);
+    printf("file name received: %s\n", fileName);
     printf("Number of rails: %d\n", numRails);
 
-    //Reading text from file
+    //Opening input file
     FILE * file;
     file = fopen(fileName, "r");
 
@@ -40,55 +155,15 @@ void encDec(int in_pipe[], int out_pipe[], char option, char * fileName, int num
     //Obtaining string from file
     fgets(buffer, BUFFER_SIZE, file);
 
+    //Closing file
+    fclose(file);
+
     printf("Read string: %s\n", buffer);
 
-    //Encode option
     if(option == '1')
     {
-        int dir = 1;
-        int charCount = 0;
-        char rails[numRails][BUFFER_SIZE];
-        
-        int railCount[numRails];
-        for(int i=0; i<numRails; i++)
-        {
-            railCount[i] = 0;
-        }
-
-        //Filling strings
-        while(buffer[charCount] != EOF)
-        {
-            for(int i=0; i<numRails; i++)
-            {
-                rails[i][railCount[i]] = buffer[charCount];
-                railCount[i]++;
-                charCount++;
-            }
-
-            for(int i=numRails-2; i>0; i--)
-            {
-                rails[i][railCount[i]] = buffer[charCount];
-                railCount[i]++;
-                charCount++;
-            }
-        }
-
-        //Printing rails
-        for(int i=0; i<numRails; i++)
-        {
-            printf("%s\n", rails[i]);
-        }
-
-        //printing encrypted string
-        for(int i=0; i<numRails; i++)
-        {
-            strcat(outBuffer, rails[i]);
-        }
-
-        printf("Encoded text: %s\n", outBuffer);
-
+        encode(numRails, buffer, fileName, newFileName);
     }else{
-        //Decode option
         if(option == '2')
         {
 
@@ -97,7 +172,7 @@ void encDec(int in_pipe[], int out_pipe[], char option, char * fileName, int num
         }
     }
 
-    strcpy(buffer, "ejemplo de path");
+    strcpy(buffer, newFileName);
     printf("Buffer desde el hijo: %s\n", buffer);
     write(out_pipe[1], buffer, BUFFER_SIZE);
     
@@ -133,13 +208,13 @@ void ui(){
             }else{
                 printf("Selected option: %c\n\n", option);
 
-                printf("Introduce the file name/path:\n");
+                printf("Introduce the file name:\n");
                 scanf("%s", fileName);
 
                 printf("Introduce the number of Rails:\n");
                 scanf("%d", &numRails);
 
-                printf("path: %s\trails: %d\n", fileName, numRails);
+                printf("name: %s\trails: %d\n", fileName, numRails);
 
                 //opening communication
                 pipe(child_to_parent);
@@ -178,43 +253,3 @@ void ui(){
     closePipes(child_to_parent, parent_to_child);
     return;
 }
-
-/*void createProcess()
-{
-    //variables to fork and pipe
-    pid_t pid;
-    int child_to_parent[2];
-    int parent_to_child[2];
-
-    //creating child process
-    pid = fork();
-
-    //Opening pipe
-    if(pipe(child_to_parent) == -1)
-    {
-        perror("pipe");
-        exit(EXIT_FAILURE);
-    }
-
-    if(pipe(parent_to_child) == -1)
-    {
-        perror("pipe");
-        exit(EXIT_FAILURE);
-    }
-
-    //parent process
-    if(pid > 0)
-    {
-        ui(child_to_parent, parent_to_child);
-        wait(NULL);
-    }else{
-        //Child process
-        if(pid == 0)
-        {
-            encDec(parent_to_child, child_to_parent);
-        }else{
-            printf("Error: Unable to fork\n");
-            exit(EXIT_FAILURE);
-        }
-    }
-}*/
