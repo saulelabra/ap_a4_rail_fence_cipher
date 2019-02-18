@@ -15,116 +15,204 @@ void closePipes(int in_pipe[], int out_pipe[])
     close (out_pipe[1]);
 }
 
-char * encode(int numRails, char * buffer, char * fileName, char * newFileName)
+char * encode(int numRails, char * fileName, char * newFileName)
 {
-    int charCount;
-    int railCount[numRails];
-    char rails[numRails][BUFFER_SIZE];
-    char outBuffer[BUFFER_SIZE];
-    
-    //Initializing counters to 0
-    charCount = 0;
-    for(int i=0; i<numRails; i++)
-    {
-        railCount[i] = 0;
-    }
+    //Variables to read from file
+    char buffer[BUFFER_SIZE];
+    FILE * inFile;
+    inFile = fopen(fileName, "r");
 
-    //Filling strings
-    while(buffer[charCount] != EOF)
-    {
-        for(int i=0; i<numRails; i++)
-        {
-            rails[i][railCount[i]] = buffer[charCount];
-            railCount[i]++;
-            charCount++;
-        }
-
-        for(int i=numRails-2; i>0; i--)
-        {
-            rails[i][railCount[i]] = buffer[charCount];
-            railCount[i]++;
-            charCount++;
-        }
-    }
-
-    //Printing rails
-    for(int i=0; i<numRails; i++)
-    {
-        printf("%s\n", rails[i]);
-    }
-
-    //printing encrypted string
-    for(int i=0; i<numRails; i++)
-    {
-        strcat(outBuffer, rails[i]);
-    }
-
-    printf("Encoded text: %s\n", outBuffer);
-
-    //Create file and write into it
+    //Variables for output File
     FILE * newFile;
     strcpy(newFileName, "encoded_");
     strcat(newFileName, fileName);
-
     newFile = fopen(newFileName, "w");
-    fputs(outBuffer, newFile);
+
+    //Checking if input file exists
+    if(inFile == NULL)
+    {
+        printf("Error: File not found\n");
+    }
+
+    while(fgets(buffer, BUFFER_SIZE, inFile) != NULL)
+    {
+        //Removing new line char
+        if(buffer[strlen(buffer)-1] == '\n')
+        {
+            buffer[strlen(buffer)-1] = '\0';
+        }
+
+        //Variables to encode
+        int charCount;
+        int railCount[numRails];
+        char rails[numRails][BUFFER_SIZE];
+        char outBuffer[BUFFER_SIZE];
+        
+        //Initializing counters to 0
+        charCount = 0;
+        for(int i=0; i<numRails; i++)
+        {
+            railCount[i] = 0;
+        }
+
+        //Filling strings
+        while(buffer[charCount] != EOF)
+        {
+            for(int i=0; i<numRails; i++)
+            {
+                rails[i][railCount[i]] = buffer[charCount];
+                railCount[i]++;
+                charCount++;
+            }
+
+            for(int i=numRails-2; i>0; i--)
+            {
+                rails[i][railCount[i]] = buffer[charCount];
+                railCount[i]++;
+                charCount++;
+            }
+        }
+
+        //Appending rails
+        strcpy(outBuffer, rails[0]);
+        for(int i=1; i<numRails; i++)
+        {
+            strcat(outBuffer, rails[i]);
+        }
+        strcat(outBuffer, "\n");
+
+        //saving encoded text into new file
+        fputs(outBuffer, newFile);
+    }
+
+    fclose(inFile);
     fclose(newFile);
 
     return newFileName;
 }
 
-char * decode(int numRails, char * buffer, char * fileName, char * newFileName)
+char * decode(int numRails, char * fileName, char * newFileName)
 {
-    int charCount = 0;
-    char rails[numRails][BUFFER_SIZE];
-    char outBuffer[BUFFER_SIZE];
-    
-    //Initializing counters to 0
-    int railCount[numRails];
-    for(int i=0; i<numRails; i++)
+    //Variables to read from file
+    char buffer[BUFFER_SIZE];
+    FILE * inFile;
+    inFile = fopen(fileName, "r");
+
+    //Variables for output File
+    FILE * newFile;
+    strcpy(newFileName, "decoded_");
+    strcat(newFileName, fileName);
+    newFile = fopen(newFileName, "w");
+
+    //Checking if input file exists
+    if(inFile == NULL)
     {
-        railCount[i] = 0;
+        printf("Error: File not found\n");
     }
 
-    //Filling strings
-    while(buffer[charCount] != EOF)
+    while(fgets(buffer, BUFFER_SIZE, inFile) != NULL)
     {
+        //Removing new line char
+        if(buffer[strlen(buffer)-1] == '\n')
+        {
+            buffer[strlen(buffer)-1] = '\0';
+        }
+
+        printf("Buffer length: %lu\n", strlen(buffer));
+        printf("Buffer: %s\n", buffer);
+
+        //Variables to decode
+        char rfArr[numRails][strlen(buffer)];
+        int charCount;
+        int railPos;
+        int outCount;
+        char outBuffer[BUFFER_SIZE];
+
+        //Initializing counters to 0
+        charCount = 0;
+        railPos = 0;
+        outCount = 0;
+
+        //Filling strings
+        
+        for(int activeRail=0; activeRail<numRails; activeRail++)
+        {
+            while(railPos < strlen(buffer))
+            {
+                for(int i=0; i<numRails; i++)
+                {
+                    if(railPos >= strlen(buffer))
+                    {
+                        break;
+                    }
+
+                    if(activeRail == i)
+                    {
+                        rfArr[i][railPos] = buffer[charCount];
+                        charCount++;
+                        printf("Saved %c in [%d][%d]\n", buffer[charCount], i, railPos);                      
+                    }else{
+                        rfArr[i][railPos] = '-';
+                    }
+                    railPos++;
+                }
+
+                for(int i=numRails-2; i>0; i--)
+                {
+                    if(railPos >= strlen(buffer))
+                    {
+                        break;
+                    }
+
+                    if(activeRail == i)
+                    {
+                        rfArr[i][railPos] = buffer[charCount];
+                        charCount++;
+                        printf("Saved %c in [%d][%d]\n", buffer[charCount], i, railPos);
+                    }else{
+                        rfArr[i][railPos] = '-';
+                    }
+                    railPos++;
+                }
+            }
+            railPos = 0;
+        }
+
+        //print matrix
         for(int i=0; i<numRails; i++)
         {
-            rails[i][railCount[i]] = buffer[charCount];
-            railCount[i]++;
-            charCount++;
+            printf("%s\n", rfArr[i]);
         }
 
-        for(int i=numRails-2; i>0; i--)
+        //Appending rails
+        int position = 0;
+        while(position >= strlen(buffer))
         {
-            rails[i][railCount[i]] = buffer[charCount];
-            railCount[i]++;
-            charCount++;
+            for(int i=0; i<numRails; i++)
+            {
+                outBuffer[position] = rfArr[i][position];
+                position++;
+            }
+
+            for(int i=numRails-2; i>0; i--)
+            {
+                outBuffer[position] = rfArr[i][position];
+                position++; 
+            }
         }
+
+        /*strcpy(outBuffer, rails[0]);
+        for(int i=1; i<numRails; i++)
+        {
+            strcat(outBuffer, rails[i]);
+        }
+        strcat(outBuffer, "\n");*/
+
+        //saving decoded text into new file
+        fputs(outBuffer, newFile);
     }
 
-    //Printing rails
-    for(int i=0; i<numRails; i++)
-    {
-        printf("%s\n", rails[i]);
-    }
-
-    //printing encrypted string
-    for(int i=0; i<numRails; i++)
-    {
-        strcat(outBuffer, rails[i]);
-    }
-
-    printf("Encoded text: %s\n", outBuffer);
-
-    //Create file and write into it
-    FILE * newFile;
-    strcpy(newFileName, "encoded_");
-    strcat(newFileName, fileName);
-
-    newFile = fopen(newFileName, "w");
-    fputs(outBuffer, newFile);
+    fclose(inFile);
     fclose(newFile);
 
     return newFileName;
@@ -138,42 +226,19 @@ void encDec(int in_pipe[], int out_pipe[], char option, char * fileName, int num
     //Closing unnecesary communication
     preparePipes(in_pipe, out_pipe);
 
-    printf("Option received: %c\n", option);
-    printf("file name received: %s\n", fileName);
-    printf("Number of rails: %d\n", numRails);
-
-    //Opening input file
-    FILE * file;
-    file = fopen(fileName, "r");
-
-    //Checking if file exists
-    if(file == NULL)
-    {
-        printf("Error: File not found\n");
-    }
-
-    //Obtaining string from file
-    fgets(buffer, BUFFER_SIZE, file);
-
-    //Closing file
-    fclose(file);
-
-    printf("Read string: %s\n", buffer);
-
     if(option == '1')
     {
-        encode(numRails, buffer, fileName, newFileName);
+        encode(numRails, fileName, newFileName);
     }else{
         if(option == '2')
         {
-
+            decode(numRails, fileName, newFileName);
         }else{
             printf("Error: Invalid option\n");
         }
     }
 
     strcpy(buffer, newFileName);
-    printf("Buffer desde el hijo: %s\n", buffer);
     write(out_pipe[1], buffer, BUFFER_SIZE);
     
     closePipes(in_pipe, out_pipe);
@@ -236,7 +301,7 @@ void ui(){
 
                     read(child_to_parent[0], buffer, BUFFER_SIZE);
 
-                    printf("Buffer desde el padre: %s\n", buffer);
+                    printf("\nNew file name: %s\n", buffer);
                 }else{
                     //if it is the child process
                     if(pid == 0)
