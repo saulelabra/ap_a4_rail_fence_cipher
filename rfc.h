@@ -13,9 +13,9 @@ void preparePipes(int in_pipe[], int out_pipe[]);
 
 void closePipes(int in_pipe[], int out_pipe[]);
 
-char * encode(int numRails, char * fileName, char *newFileName);
+void encode(int numRails, char * fileName, char *newFileName);
 
-char * decode(int numRails, char * fileName, char * newFileName);
+void decode(int numRails, char * fileName, char * newFileName);
 
 void encDec(int in_pipe[], int out_pipe[], char option, char * fileName, int numRails);
 

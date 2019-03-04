@@ -15,7 +15,7 @@ void closePipes(int in_pipe[], int out_pipe[])
     close (out_pipe[1]);
 }
 
-char * encode(int numRails, char * fileName, char * newFileName)
+void encode(int numRails, char * fileName, char * newFileName)
 {
     //Variables to read from file
     char buffer[BUFFER_SIZE];
@@ -87,11 +87,9 @@ char * encode(int numRails, char * fileName, char * newFileName)
 
     fclose(inFile);
     fclose(newFile);
-
-    return newFileName;
 }
 
-char * decode(int numRails, char * fileName, char * newFileName)
+void decode(int numRails, char * fileName, char * newFileName)
 {
     //Variables to read from file
     char buffer[BUFFER_SIZE];
@@ -118,23 +116,17 @@ char * decode(int numRails, char * fileName, char * newFileName)
             buffer[strlen(buffer)-1] = '\0';
         }
 
-        printf("Buffer length: %lu\n", strlen(buffer));
-        printf("Buffer: %s\n", buffer);
-
         //Variables to decode
         char rfArr[numRails][strlen(buffer)];
         int charCount;
         int railPos;
-        int outCount;
         char outBuffer[BUFFER_SIZE];
 
         //Initializing counters to 0
         charCount = 0;
         railPos = 0;
-        outCount = 0;
 
         //Filling strings
-        
         for(int activeRail=0; activeRail<numRails; activeRail++)
         {
             while(railPos < strlen(buffer))
@@ -150,9 +142,6 @@ char * decode(int numRails, char * fileName, char * newFileName)
                     {
                         rfArr[i][railPos] = buffer[charCount];
                         charCount++;
-                        printf("Saved %c in [%d][%d]\n", buffer[charCount], i, railPos);                      
-                    }else{
-                        rfArr[i][railPos] = '-';
                     }
                     railPos++;
                 }
@@ -168,9 +157,6 @@ char * decode(int numRails, char * fileName, char * newFileName)
                     {
                         rfArr[i][railPos] = buffer[charCount];
                         charCount++;
-                        printf("Saved %c in [%d][%d]\n", buffer[charCount], i, railPos);
-                    }else{
-                        rfArr[i][railPos] = '-';
                     }
                     railPos++;
                 }
@@ -178,15 +164,9 @@ char * decode(int numRails, char * fileName, char * newFileName)
             railPos = 0;
         }
 
-        //print matrix
-        for(int i=0; i<numRails; i++)
-        {
-            printf("%s\n", rfArr[i]);
-        }
-
-        //Appending rails
+        //Writing buffer
         int position = 0;
-        while(position >= strlen(buffer))
+        while(position < strlen(buffer))
         {
             for(int i=0; i<numRails; i++)
             {
@@ -201,12 +181,8 @@ char * decode(int numRails, char * fileName, char * newFileName)
             }
         }
 
-        /*strcpy(outBuffer, rails[0]);
-        for(int i=1; i<numRails; i++)
-        {
-            strcat(outBuffer, rails[i]);
-        }
-        strcat(outBuffer, "\n");*/
+        outBuffer[position] = '\n';
+        outBuffer[position+1] = '\0';
 
         //saving decoded text into new file
         fputs(outBuffer, newFile);
@@ -214,8 +190,6 @@ char * decode(int numRails, char * fileName, char * newFileName)
 
     fclose(inFile);
     fclose(newFile);
-
-    return newFileName;
 }
 
 void encDec(int in_pipe[], int out_pipe[], char option, char * fileName, int numRails)
